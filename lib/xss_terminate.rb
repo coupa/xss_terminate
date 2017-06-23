@@ -37,7 +37,7 @@ module XssTerminate
     def sanitize_fields
       # fix a bug with Rails internal AR::Base models that get loaded before
       # the plugin, like CGI::Sessions::ActiveRecordStore::Session
-      return if xss_terminate_options.nil?
+      return if xss_terminate_options.nil? || destroyed?
       
       self.class.columns.each do |column|
         next unless (column.type == :string || column.type == :text)
