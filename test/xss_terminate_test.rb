@@ -1,6 +1,12 @@
-require File.join(File.dirname(__FILE__), 'setup_test')
-
 class XssTerminateTest < Test::Unit::TestCase
+  def test_xss_terminate_inheritance
+    assert_equal :html, Entry.xss_terminate_options_for(:body)[:as]
+    assert_equal :html, Entry.xss_terminate_options_for(:extended)[:as]
+
+    assert_equal :text, ChildEntry.xss_terminate_options_for(:body)[:as]
+    assert_equal :html, ChildEntry.xss_terminate_options_for(:extended)[:as]
+  end
+
   def test_strip_tags_on_discovered_fields
     c = Comment.create!(:title => "<script>alert('xss in title')</script>",
                         :body => "<script>alert('xss in body')</script>")
@@ -16,7 +22,8 @@ class XssTerminateTest < Test::Unit::TestCase
                       :extended => "<script>alert('xss in extended')</script>&me",
                       :person_id => 1)
 
-    assert_equal [:body, :extended], e.xss_terminate_options[:html5lib_sanitize]
+    assert_equal :html, Entry.xss_terminate_options_for(:body)[:as]
+    assert_equal :html, Entry.xss_terminate_options_for(:extended)[:as]
 
     # The default text sanitizer returns text
     assert_equal "alert('xss in title')&me", e.title
@@ -29,7 +36,7 @@ class XssTerminateTest < Test::Unit::TestCase
   def test_excepting_specified_fields
     p = Person.create!(:name => "<strong>Mallory</strong>")
     
-    assert_equal [:name], p.xss_terminate_options[:except]
+    assert_equal({}, Person.xss_terminate_options_for(:name))
     
     assert_equal "<strong>Mallory</strong>", p.name
   end
@@ -49,5 +56,4 @@ class XssTerminateTest < Test::Unit::TestCase
     g = Group.new(:title => "XSS Terminate group", :description => 123456, :members => {:hash => 'rocket'})
     assert g.save
   end
-
 end

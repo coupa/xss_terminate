@@ -7,7 +7,7 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
-task :console => :environment do
+task :console => :test_environment do
   require 'irb'
   require 'byebug'
   ARGV.clear
@@ -17,7 +17,11 @@ end
 task :environment do
   require 'bundler/setup'
   Bundler.setup
-  Bundler.require(:default, :test)
+end
+
+task :test_environment => :environment do
+  $:.unshift File.dirname(__FILE__) + "/test"
+  require 'setup_test'
 end
 
 desc 'By default, run the unit tests'
