@@ -1,6 +1,6 @@
 = xss_terminate
 
-![Build Status](https://travis-ci.org/coupa/xss_terminate.svg?branch=master)
+[![Build Status](https://travis-ci.org/coupa/xss_terminate.svg?branch=master)](https://travis-ci.org/coupa/xss_terminate)
 
 +xss_terminate+ is a plugin in that makes stripping and sanitizing HTML 
 stupid-simple. Install and forget. And forget about forgetting to <tt>h()</tt>
