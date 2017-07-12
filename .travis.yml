@@ -1,0 +1,8 @@
+sudo: false
+language: ruby
+cache: bundler
+rvm:
+  - 2.3.0
+  - 2.4.0
+env:
+  - ACTIVERECORD=4.2.0
