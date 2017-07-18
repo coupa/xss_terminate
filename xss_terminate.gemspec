@@ -39,7 +39,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{xss_terminate is a plugin in that makes stripping and sanitizing HTML stupid-simple.}
   s.test_files = [
-    "test/models/comment.rb",
+     "test/models/comment.rb",
      "test/models/entry.rb",
      "test/models/group.rb",
      "test/models/message.rb",
@@ -55,5 +55,9 @@ Gem::Specification.new do |s|
   end
 
   s.add_dependency "rails", "~> 4.2.5"
+  s.add_development_dependency 'byebug'
+  s.add_development_dependency 'rake'
+  s.add_development_dependency('sqlite3')
+  s.add_development_dependency 'test-unit', '~> 3.1'
 end
 

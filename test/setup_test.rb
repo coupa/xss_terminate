@@ -1,9 +1,15 @@
-# borrowed from err who borrowed from topfunky who borrowed from...
+require 'bundler/setup'
+Bundler.setup
+
+require 'byebug'
+require 'rails/all'
+Bundler.require(:default, :test)
 
 # set up test environment
-RAILS_ENV = 'test'
-require File.expand_path(File.join(File.dirname(__FILE__), '../../../../config/environment.rb'))
 require 'test/unit'
+require 'xss_terminate'
+
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 # load test schema
 load(File.dirname(__FILE__) + "/schema.rb")
