@@ -11,18 +11,19 @@ class XssTerminateTest < Test::Unit::TestCase
   end
   
   def test_rails_sanitization_on_specified_fields
-    e = Entry.create!(:title => "<script>alert('xss in title')</script>",
-                      :body => "<script>alert('xss in body')</script>",
-                      :extended => "<script>alert('xss in extended')</script>",
+    e = Entry.create!(:title => "<script>alert('xss in title')</script>&me",
+                      :body => "<script>alert('xss in body')</script>&me",
+                      :extended => "<script>alert('xss in extended')</script>&me",
                       :person_id => 1)
 
-    assert_equal [:body, :extended], e.xss_terminate_options[:sanitize]
-    
-    assert_equal "alert('xss in title')", e.title
+    assert_equal [:body, :extended], e.xss_terminate_options[:html5lib_sanitize]
 
-    assert_equal "", e.body
+    # The default text sanitizer returns text
+    assert_equal "alert('xss in title')&me", e.title
 
-    assert_equal "", e.extended
+    # The html5lib_sanitizers return HTML
+    assert_equal "alert('xss in body')&amp;me", e.body
+    assert_equal "alert('xss in extended')&amp;me", e.extended
   end
   
   def test_excepting_specified_fields
@@ -32,19 +33,11 @@ class XssTerminateTest < Test::Unit::TestCase
     
     assert_equal "<strong>Mallory</strong>", p.name
   end
-  
-  # issue reported by Garrett Dimon and jmcnevin
-  def test_active_record_session_store_does_not_cause_nil_exception
-    assert_nil CGI::Session::ActiveRecordStore::Session.xss_terminate_options
-
-    session = CGI::Session::ActiveRecordStore::Session.new(:session_id => 'foo', :data => 'blah')
-    assert session.save
-  end
 
   def test_do_not_save_invalid_models_after_sanitizing
     c = Comment.new(:title => "<br />")
     assert !c.save
-    assert_not_nil c.errors.on(:title)
+    assert_not_nil c.errors[:title]
   end
   
   def test_valid_work_with_serialize_fields

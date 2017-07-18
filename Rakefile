@@ -1,9 +1,4 @@
-require 'rake'
 require 'rake/testtask'
-require 'rake/rdoctask'
-
-desc 'Default: run unit tests.'
-task :default => :test
 
 desc 'Test the xss_terminate plugin.'
 Rake::TestTask.new(:test) do |t|
@@ -12,26 +7,18 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
-desc 'Generate documentation for the xss_terminate plugin.'
-Rake::RDocTask.new(:rdoc) do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title    = 'xss_terminate'
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README')
-  rdoc.rdoc_files.include('lib/**/*.rb')
+task :console => :environment do
+  require 'irb'
+  require 'byebug'
+  ARGV.clear
+  IRB.start
 end
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |s|
-    s.name = "xss_terminate"
-    s.summary = "xss_terminate is a plugin in that makes stripping and sanitizing HTML stupid-simple."
-    s.email = "look@recursion.org"
-    s.homepage = "http://github.com/look/xss_terminate"
-    s.description = "xss_terminate is a plugin in that makes stripping and sanitizing HTML stupid-simple. Install and forget. And forget about forgetting to h() your output, because you won‘t need to anymore."
-    s.authors = ["Luke Francl"]
-    s.files =  FileList["[A-Z]*", "{lib,test}/**/*", 'lib/jeweler/templates/.gitignore']
-  end
-rescue LoadError
-  puts "Jeweler, or one of its dependencies, is not available. Install it with: sudo gem install jeweler"
+task :environment do
+  require 'bundler/setup'
+  Bundler.setup
+  Bundler.require(:default, :test)
 end
+
+desc 'By default, run the unit tests'
+task :default => :test
