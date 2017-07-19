@@ -1,6 +1,6 @@
 class TextSanitizerTest < Test::Unit::TestCase
   def test_sanitizer
-    sanitizer = XssTerminate::TextSanitizer.new
+    sanitizer = ::XssTerminate::Formats.lookup(:text).sanitizer
 
     expected = {
       'a<b'      => 'a<b',

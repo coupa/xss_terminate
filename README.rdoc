@@ -10,11 +10,11 @@ To install, add `xss_terminate` to your `Gemfile`.
 
 == HTML sanitization
 
-A note on your choices.
+Formats supported:
 
-* Text sanitizer: (default) removes anything that looks like tags. This function processes the strings as text characters, and will produce only text. For example, it will not HTML escape your characters, since after they are HTML-escaped, the output is technically HTML now instead of plain text. The Rails's built-in +strip_tags+ method is not used because it produces HTML and will remove incomplete tags. For example `strip_tags("a<b")` will return "a".
-* HTML5lib sanitization: Removes bad HTML after parsing it with {HTML5lib}[http://code.google.com/p/html5lib/], a library that parses HTML like browsers do. It should be very tolerant of invalid HTML. Bad tags are escaped, not removed.
-* Do nothing. You can chose not to process given fields.
+* <tt>:text</tt>: (default) The text sanitizer removes anything that looks like tags. This function processes the strings as text characters, and will produce only text. For example, it will not HTML escape your characters, since after they are HTML-escaped, the output is technically HTML now instead of plain text. The Rails's built-in +strip_tags+ method is not used because it produces HTML and will remove incomplete tags. For example `strip_tags("a<b")` will return "a".
+* <tt>:html</tt>: The HTML sanitizer used is the <tt>Rails::Html::WhiteListSanitizer</tt>. It removes bad HTML after parsing it as HTML. It should be tolerant of invalid HTML. Bad tags are removed.
+* <tt>:raw</tt>: The "raw" format does not sanitize. You can use this to turn off xss_terminate.
 
 == Usage
 
@@ -26,38 +26,37 @@ is what you want. To customize the default behavior, you use the
  XssTerminate.configure do |c|
    # These are the default options applied to each attribute
    c.default_options = {
-     if: true,     # Enables xss_terminate by default
-     as: :text,    # Sanitizes as text by default
-   }
-
-   # These are the sanitizers used for the different `:as` formats
-   c.sanitizers = {
-     # This is the default sanitizer for `:html`
-     html: ::XssTerminate::RailsSanitizer.white_list_sanitizer,
-
-     # This is the default sanitizer for `:text`
-     text: ::XssTerminate::TextSanitizer.new,
+     format: :text,    # Sanitizes as text by default
    }
  end
 
-To exempt some fields from sanitization, use the <tt>:if</tt> option to disable
-xss_terminate. Currently on <tt>true</tt> or <tt>false</tt> is supported.
+To exempt some fields from sanitization, set the <tt>:format</tt> option to <tt>:raw</tt>. You can also set <tt>:format</tt> to a Proc which returns the format.
 
  class Comment < ActiveRecord::Base
-   xss_terminate :body, if: false
+   xss_terminate :body, format: :raw
+ end
+
+ class Comment < ActiveRecord::Base
+   def sanitize_body?
+     @sanitize_body.nil? ? true : @sanitize_body
+   end
+
+   xss_terminate :body, format: ->(r) do
+     r.sanitize_body? ? :text : :raw
+   end
  end
 
 If your column is for text, you should use:
 
   class Review < ActiveRecord::Base
-    xss_terminate :title, as: text
-    xss_terminate [:publisher, :author_name], as: :text
+    xss_terminate :title, format: text
+    xss_terminate [:publisher, :author_name], format: :text
   end
  
 If your column is for HTML, you should use:
 
  class Entry < ActiveRecord::Base
-   xss_terminate :body_html, as: :html
+   xss_terminate :body_html, format: :html
  end
  
 Properties are inherited by child classes, unless specifically override.
@@ -65,7 +64,7 @@ Properties are inherited by child classes, unless specifically override.
  class ChildReview < Review
    # title is now processed as HTML
    # publisher and author_name continue to be processed as text
-   xss_terminate :title, as: :html
+   xss_terminate :title, format: :html
  end
 
 == Credits
