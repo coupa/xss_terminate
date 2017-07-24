@@ -1,64 +1,39 @@
-require 'rails_sanitize'
-require 'coupa_sanitize'
+require_relative 'xss_terminate/active_record'
+require_relative 'xss_terminate/railtie'
+require_relative 'xss_terminate/rails_sanitizer'
+require_relative 'xss_terminate/text_sanitizer'
 
 module XssTerminate
-  def self.included(base)
-    base.extend(ClassMethods)
-    base.send(:include, InstanceMethods)
-    base.class_eval do
-      unless respond_to?(:xss_terminate_options)
-        class_attribute :xss_terminate_options
-        self.xss_terminate_options = {
-          except: [],
-          html5lib_sanitize: [],
-          html5lib_options: {},
-        }
-      end
-    end
+  # Configures xss_terminate
+  #
+  # XssTerminate.configure do |c|
+  #   # These are the default options applied to each attribute
+  #   c.options = {
+  #     if: true,     # Enables xss_terminate by default
+  #     as: :text,    # Sanitizes as text by default
+  #   }
+  #
+  #   # This is the sanitizer used for :text
+  #   c.text_sanitizer = ...
+  #
+  #   # This is the sanitizer used for :html
+  #   c.html_sanitizer = ...
+  # end
+  def self.configure
+    yield(self.configuration)
   end
 
-  module ClassMethods
-    def xss_terminate(options = {})
-      xss_options = self.xss_terminate_options.dup
-      xss_options[:except] = xss_options[:except].dup
-      xss_options[:html5lib_sanitize] = xss_options[:html5lib_sanitize].dup
-      xss_options[:html5lib_options] = xss_options[:html5lib_options].dup
-
-      xss_options[:except].concat(options[:except] || []).uniq!
-      xss_options[:html5lib_sanitize].concat(options[:html5lib_sanitize] || []).uniq!
-      xss_options[:html5lib_options].merge!(options[:html5lib_options] || {})
-
-      self.xss_terminate_options = xss_options
-    end
-  end
-  
-  module InstanceMethods
-
-    def sanitize_fields
-      # fix a bug with Rails internal AR::Base models that get loaded before
-      # the plugin, like CGI::Sessions::ActiveRecordStore::Session
-      return if xss_terminate_options.nil? || destroyed?
-      
-      self.class.columns.each do |column|
-        next unless (column.type == :string || column.type == :text)
-        
-        field = column.name.to_sym
-        value = self[field]
-
-        next if value.nil? || !value.is_a?(String)
-        
-        if xss_terminate_options[:except].include?(field)
-          next
-        elsif xss_terminate_options[:html5lib_sanitize].include?(field)
-          self[field] = RailsSanitize.white_list_sanitizer.sanitize(value)
-        else
-          self[field] = CoupaSanitize.perform(value)
-        end
-      end
-      
-    end
+  # Returns the current xss_terminate configuration
+  def self.configuration
+    @configuration ||= OpenStruct.new(
+      default_options: {
+        if: true,
+        as: :text,
+      },
+      sanitizers: {
+        html: ::XssTerminate::RailsSanitizer.white_list_sanitizer,
+        text: ::XssTerminate::TextSanitizer.new,
+      },
+    )
   end
 end
-
-ActiveRecord::Base.send(:include, XssTerminate)
-ActiveRecord::Base.before_validation :sanitize_fields

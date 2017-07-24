@@ -5,48 +5,37 @@
 
 Gem::Specification.new do |s|
   s.name = %q{xss_terminate}
-  s.version = "0.5.3"
+  s.version = "0.6.0"
+  s.license = 'MIT'
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Luke Francl"]
-  s.date = %q{2010-12-09}
-  s.description = %q{xss_terminate is a plugin in that makes stripping and sanitizing HTML stupid-simple. Install and forget. And forget about forgetting to h() your output, because you won't need to anymore.}
-  s.email = %q{look@recursion.org}
+  s.authors = ["Luke Francl", "Bing-Chang Lai"]
+  s.date = %q{2017-07-21}
+  s.description = %q{xss_terminate sanitizes your data before it hits the database so that you don't end up storing XSS attacks. You should still HTML-escape or HTML-sanitize the data before displaying in a HTML page.}
+  s.email = %q{look@recursion.org johnny.lai@me.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
-  s.files = [
-    "CHANGELOG",
-     "MIT-LICENSE",
-     "README.rdoc",
-     "Rakefile",
-     "VERSION",
-     "lib/rails_sanitize.rb",
-     "lib/tasks/xss_terminate_tasks.rake",
-     "lib/xss_terminate.rb",
-     "test/models/comment.rb",
-     "test/models/entry.rb",
-     "test/models/group.rb",
-     "test/models/message.rb",
-     "test/models/person.rb",
-     "test/schema.rb",
-     "test/setup_test.rb",
-     "test/xss_terminate_test.rb"
-  ]
-  s.homepage = %q{http://github.com/look/xss_terminate}
+
+  file_list = `git ls-files`.split
+  s.files       = file_list
+
+  s.homepage = %q{http://github.com/coupa/xss_terminate}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
-  s.summary = %q{xss_terminate is a plugin in that makes stripping and sanitizing HTML stupid-simple.}
+  s.summary = %q{xss_terminate sanitizes your data before it hits the database.}
   s.test_files = [
      "test/models/comment.rb",
+     "test/models/child_entry.rb",
      "test/models/entry.rb",
      "test/models/group.rb",
      "test/models/message.rb",
      "test/models/person.rb",
      "test/schema.rb",
      "test/setup_test.rb",
-     "test/xss_terminate_test.rb"
+     "test/text_sanitizer_test.rb",
+     "test/xss_terminate_test.rb",
   ]
 
   if s.respond_to? :specification_version then

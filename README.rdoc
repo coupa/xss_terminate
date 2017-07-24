@@ -2,88 +2,75 @@
 
 {<img src="https://travis-ci.org/coupa/xss_terminate.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/coupa/xss_terminate]
 
-+xss_terminate+ is a plugin in that makes stripping and sanitizing HTML 
-stupid-simple. Install and forget. And forget about forgetting to <tt>h()</tt>
-your output, because you won't need to anymore.
++xss_terminate+ sanitizes your data before it hits the database so that you
+don't end up storing XSS attacks. You should still HTML-escape or HTML-sanitize
+the data before displaying in a HTML page.
 
-But +xss_terminate+ is also flexible. By default, it will strip all HTML tags
-from user input. This is usually what you want, but sometimes you need users to be 
-able to enter HTML. The plugin allows you remove bad HTML with your choice
-of two whitelist-based sanitizers, or to skip HTML sanitization entirely on
-a per-field basis.
-
-To install, do:
-
-  script/plugin install git://github.com/look/xss_terminate.git
+To install, add `xss_terminate` to your `Gemfile`.
 
 == HTML sanitization
 
 A note on your choices.
 
-* Strip tags: removes all HTML using Rails's built-in +strip_tags+ method. Tags are removed, but their content is not.
-* Rails sanitization: Removes bad HTML with Rails's built-in sanitize method. Bad tags are removed completely, including their content.
+* Text sanitizer: (default) removes anything that looks like tags. This function processes the strings as text characters, and will produce only text. For example, it will not HTML escape your characters, since after they are HTML-escaped, the output is technically HTML now instead of plain text. The Rails's built-in +strip_tags+ method is not used because it produces HTML and will remove incomplete tags. For example `strip_tags("a<b")` will return "a".
 * HTML5lib sanitization: Removes bad HTML after parsing it with {HTML5lib}[http://code.google.com/p/html5lib/], a library that parses HTML like browsers do. It should be very tolerant of invalid HTML. Bad tags are escaped, not removed.
 * Do nothing. You can chose not to process given fields.
 
 == Usage
 
-Installing the plugin creates a +before_save+ hook that will strip HTML tags 
+Installing the plugin creates a +before_validation+ hook that will strip HTML tags
 from all string and text fields. No further configuration is necessary if this
-is what you want. To customize the behavior, you use the +xss_terminate+ class 
-method.
+is what you want. To customize the default behavior, you use the
++XssTerminate.configure+ class method.
 
-To exempt some fields from sanitization, use the <tt>:except</tt> option 
-with a list of fields not to process:
+ XssTerminate.configure do |c|
+   # These are the default options applied to each attribute
+   c.default_options = {
+     if: true,     # Enables xss_terminate by default
+     as: :text,    # Sanitizes as text by default
+   }
+
+   # These are the sanitizers used for the different `:as` formats
+   c.sanitizers = {
+     # This is the default sanitizer for `:html`
+     html: ::XssTerminate::RailsSanitizer.white_list_sanitizer,
+
+     # This is the default sanitizer for `:text`
+     text: ::XssTerminate::TextSanitizer.new,
+   }
+ end
+
+To exempt some fields from sanitization, use the <tt>:if</tt> option to disable
+xss_terminate. Currently on <tt>true</tt> or <tt>false</tt> is supported.
 
  class Comment < ActiveRecord::Base
-   xss_terminate :except => [ :body ]
+   xss_terminate :body, if: false
  end
 
-To sanitize HTML with Rails's built-in sanitization, use the <tt>:sanitize</tt> option:
+If your column is for text, you should use:
 
   class Review < ActiveRecord::Base
-    xss_terminate :sanitize => [ :body, :author_name]
+    xss_terminate :title, as: text
+    xss_terminate [:publisher, :author_name], as: :text
   end
  
-To sanitize HTML with {HTML5Lib}[http://code.google.com/p/html5lib/] 
-(<tt>gem install html5</tt> to get it), use the <tt>:html5lib_sanitize</tt> 
-option with a list of fields to sanitize:
+If your column is for HTML, you should use:
 
  class Entry < ActiveRecord::Base
-   xss_terminate :html5lib_sanitize => [ :body, :author_name ]
+   xss_terminate :body_html, as: :html
  end
  
-You can combine multiple options if you have some fields you would like skipped
-and others sanitized. Fields not listed in the option arrays will be stripped.
+Properties are inherited by child classes, unless specifically override.
 
- class Message < ActiveRecord::Base
-   xss_terminate :except => [ :body ], :sanitize => [ :title ]
+ class ChildReview < Review
+   # title is now processed as HTML
+   # publisher and author_name continue to be processed as text
+   xss_terminate :title, as: :html
  end
 
-== Sanitizing existing records
-
-After installing +xss_terminate+ and configuring it to your liking, you can 
-run <tt>rake xss_terminate MODELS=Foo,Bar,Baz</tt> to execute it against your
-existing records. This will load each model found and save it again to invoke
-the before_save hook.
-
-== Unique features
-
-+xss_terminate+ is based on +acts_as_sanitized+. Here is what's different:
-
-* Supports Rails 2.0-2.2 (may work on edge Rails, but I haven't tested it)
-* Automatic. It is included with default options in <tt>ActiveReord::Base</tt> so all your models are sanitized.
-* It works with migrations. Columns are fetched when model is saved, not when the class is loaded.
-* You can decide whether to sanitize or strip tags on a field-by-field basis instead of model-by-model.
-* HTML5lib support.
-
-== TODO
-
-* Performance tests
-* Test suites with "real world" HTML
-* Test/make work with Rails 1.2.x (Rails 1.2 sanitization is crap, so you'd want to use HTML5lib)
-
 == Credits
+
+This fork is currently used by Coupa Software Incorporated, and is derived from jystewart/xss_terminate.
 
 Written by {Luke Francl}[http://railspikes.com] and based on acts_as_sanitized by 
 {Alex Payne}[http://www.al3x.net].
