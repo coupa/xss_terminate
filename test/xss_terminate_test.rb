@@ -1,10 +1,12 @@
 class XssTerminateTest < Test::Unit::TestCase
   def test_xss_terminate_inheritance
-    assert_equal :html, Entry.xss_terminate_options_for(:body)[:as]
-    assert_equal :html, Entry.xss_terminate_options_for(:extended)[:as]
+    e = Entry.new
+    assert_equal :html, e.xss_terminate_options_for(:body)[:format]
+    assert_equal :html, e.xss_terminate_options_for(:extended)[:format]
 
-    assert_equal :text, ChildEntry.xss_terminate_options_for(:body)[:as]
-    assert_equal :html, ChildEntry.xss_terminate_options_for(:extended)[:as]
+    c = ChildEntry.new
+    assert_equal :text, c.xss_terminate_options_for(:body)[:format]
+    assert_equal :html, c.xss_terminate_options_for(:extended)[:format]
   end
 
   def test_strip_tags_on_discovered_fields
@@ -12,18 +14,59 @@ class XssTerminateTest < Test::Unit::TestCase
                         :body => "<script>alert('xss in body')</script>")
 
     assert_equal "alert('xss in title')", c.title
-    
     assert_equal "alert('xss in body')", c.body
   end
-  
+
+  def test_sanitized_on_assignment
+    c = Comment.new
+    c.title = "<script>alert('xss in title2')</script>"
+    assert_equal "alert('xss in title2')", c.title
+
+    c[:title] = "<script>alert('xss in title3')</script>"
+    assert_equal "alert('xss in title3')", c.title
+  end
+
+  def test_conditional_sanitization_with_an_if_proc
+    c = ChildEntry.new
+    c.body_format = :text
+    c.body = "<script>alert('xss in title2')</script>&<b"
+    assert_equal "alert('xss in title2')&<b", c.body
+
+    # xss_terminate_options are cached. So we clear it
+    c.xss_terminate_options_clear
+    c.body_format = :raw
+    c.body = "<script>alert('xss in title3')</script>&<b"
+    assert_equal "<script>alert('xss in title3')</script>&<b", c.body
+    c.save!
+
+    # Saving should have cleared the xss_terminate_options cache.
+    c.body_format = :html
+    c.body = "<script>alert('xss in title4')</script>&<b"
+    assert_equal "alert('xss in title4')&amp;<b></b>", c.body
+  end
+
+  def test_sanitization_options
+    c = ChildEntry.new
+
+    c.with_xss_terminate_options(format: :html) do
+      c.body = "<script>alert('xss in title4')</script>&b"
+      assert_equal "alert('xss in title4')&amp;b", c.body
+    end
+
+    c.with_xss_terminate_options(format: :html, html_options: {tags: %w[script]}) do
+      c.body = "<script>alert('xss in title4')</script>&b"
+      assert_equal "<script>alert('xss in title4')</script>&amp;b", c.body
+    end
+  end
+
   def test_rails_sanitization_on_specified_fields
     e = Entry.create!(:title => "<script>alert('xss in title')</script>&me",
                       :body => "<script>alert('xss in body')</script>&me",
                       :extended => "<script>alert('xss in extended')</script>&me",
                       :person_id => 1)
 
-    assert_equal :html, Entry.xss_terminate_options_for(:body)[:as]
-    assert_equal :html, Entry.xss_terminate_options_for(:extended)[:as]
+    assert_equal :html, e.xss_terminate_options_for(:body)[:format]
+    assert_equal :html, e.xss_terminate_options_for(:extended)[:format]
 
     # The default text sanitizer returns text
     assert_equal "alert('xss in title')&me", e.title
@@ -36,7 +79,7 @@ class XssTerminateTest < Test::Unit::TestCase
   def test_excepting_specified_fields
     p = Person.create!(:name => "<strong>Mallory</strong>")
     
-    assert_equal({}, Person.xss_terminate_options_for(:name))
+    assert_equal({ format: :raw }, p.xss_terminate_options_for(:name))
     
     assert_equal "<strong>Mallory</strong>", p.name
   end

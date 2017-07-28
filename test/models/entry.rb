@@ -3,5 +3,5 @@ class Entry < ActiveRecord::Base
   belongs_to :person
   has_many :comments
   
-  xss_terminate [:body, :extended], as: :html
+  xss_terminate [:body, :extended], format: :html
 end
