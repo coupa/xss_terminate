@@ -43,7 +43,7 @@ module XssTerminate
 
       # Sanitized value for using the options for attr_name
       def xss_terminate_sanitize(attr_name, value)
-        if !value.nil? && value.is_a?(String) && @attributes[attr_name].type.is_a?(::ActiveRecord::Type::String)
+        if !value.nil? && value.is_a?(String)
           opts = @xss_terminate_options_override || xss_terminate_options_for(attr_name)
           if sanitizer = Formats.lookup(opts[:format]).sanitizer
             format_options_key = "#{opts[:format]}_options".to_sym
@@ -71,6 +71,10 @@ module XssTerminate
       # Retrieves xss_terminate options for the specified attribute
       # Since this method is called on an attribute-by-attribute basis, we use a cache of the options
       def xss_terminate_options_for(attribute)
+        # The @xss_terminate_options_cache is keyed using symbols
+        attribute = attribute.to_sym
+
+        # Check if we have a cache of the evaluated options
         return @xss_terminate_options_cache[attribute] if @xss_terminate_options_cache&.has_key?(attribute)
 
         # There is no cache for the options
