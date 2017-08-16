@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{xss_terminate}
-  s.version = "0.6.0"
+  s.version = "0.6.1"
   s.license = 'MIT'
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
@@ -33,7 +33,8 @@ Gem::Specification.new do |s|
      "test/models/message.rb",
      "test/models/person.rb",
      "test/schema.rb",
-     "test/setup_test.rb",
+     "test/_setup_test.rb",
+     "test/formats_test.rb",
      "test/text_sanitizer_test.rb",
      "test/xss_terminate_test.rb",
   ]
