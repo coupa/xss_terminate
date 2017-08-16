@@ -6,7 +6,7 @@
 don't end up storing XSS attacks. You should still HTML-escape or HTML-sanitize
 the data before displaying in a HTML page.
 
-To install, add <tt>xss_terminate</tt> to your Gemfile<.
+To install, add <tt>xss_terminate</tt> to your Gemfile.
 
 == HTML sanitization
 
