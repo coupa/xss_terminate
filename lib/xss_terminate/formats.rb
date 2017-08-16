@@ -7,7 +7,7 @@ module XssTerminate
     autoload :Raw
     
     class <<self
-      def lookup(format)
+      def [](format)
         s_class = const_get(format.to_s.camelize)
       end
     end

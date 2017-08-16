@@ -45,7 +45,7 @@ module XssTerminate
       def xss_terminate_sanitize(attr_name, value)
         if !value.nil? && value.is_a?(String)
           opts = @xss_terminate_options_override || xss_terminate_options_for(attr_name)
-          if sanitizer = Formats.lookup(opts[:format]).sanitizer
+          if sanitizer = Formats[opts[:format]].sanitizer
             format_options_key = "#{opts[:format]}_options".to_sym
             value = if opts.has_key?(format_options_key)
               sanitizer.sanitize(value, opts[format_options_key])

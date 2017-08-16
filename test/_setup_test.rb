@@ -1,3 +1,5 @@
+# This file needs to be first
+
 require 'bundler/setup'
 Bundler.setup
 
