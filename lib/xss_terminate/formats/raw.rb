@@ -1,3 +1,5 @@
+require_relative 'abstract_format'
+
 module XssTerminate
   module Formats
     class Raw < AbstractFormat
