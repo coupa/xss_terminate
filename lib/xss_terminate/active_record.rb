@@ -37,8 +37,33 @@ module XssTerminate
     end
 
     module InstanceMethods
-      def write_attribute_with_type_cast(attr_name, value, should_type_cast)
-        super(attr_name, xss_terminate_sanitize(attr_name, value), should_type_cast)
+      # Added to allow for backwards compatability
+      if ::ActiveRecord::AttributeMethods::Write.private_method_defined? :write_attribute_with_type_cast
+        # Rails <= 5.0
+        def write_attribute_with_type_cast(attr_name, value, should_type_cast)
+          super(attr_name, xss_terminate_sanitize(attr_name, value), should_type_cast)
+        end
+      elsif ::ActiveRecord::AttributeMethods::Write.method_defined? :raw_write_attribute
+        # Rails = 5.1
+        def raw_write_attribute(attr_name, value)
+          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        end
+
+        def write_attribute(attr_name, value)
+          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        end
+      elsif ::ActiveRecord::AttributeMethods::Write.private_method_defined? :write_attribute_without_type_cast
+        # Rails 5.2
+        def write_attribute_without_type_cast(attr_name, value)
+          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        end
+
+        def _write_attribute(attr_name, value)
+          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        end
+      else
+        # Unknown Rails
+        raise NotImplementedError, "Expected methods not found, unknown Rails version. Please check gemspec"
       end
 
       # Sanitized value for using the options for attr_name
