@@ -21,7 +21,7 @@ end
 
 task :test_environment => :environment do
   $:.unshift File.dirname(__FILE__) + "/test"
-  require 'setup_test'
+  require '_setup_test'
 end
 
 desc 'By default, run the unit tests'
