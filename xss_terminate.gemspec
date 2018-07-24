@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{xss_terminate}
-  s.version = '0.6.2'
+  s.version = '0.6.3'
   s.license = 'MIT'
 
   s.required_rubygems_version = Gem::Requirement.new('>= 0') if s.respond_to? :required_rubygems_version=
@@ -44,7 +44,7 @@ Gem::Specification.new do |s|
     s.specification_version = 3
   end
 
-  s.add_dependency 'rails', ['>= 4.2.5', '~> 5.2.0']
+  s.add_dependency 'rails', '>= 4.2.5'
   s.add_development_dependency 'byebug'
   s.add_development_dependency 'rake'
   s.add_development_dependency('sqlite3')
