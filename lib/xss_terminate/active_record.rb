@@ -11,6 +11,14 @@ module XssTerminate
           self.xss_terminate_options = {}
 
           after_save :xss_terminate_options_clear
+
+          if ::ActiveRecord::AttributeMethods::Write.method_defined? :raw_write_attribute
+            alias raw_write_attribute_without_xss_terminate raw_write_attribute
+            alias raw_write_attribute raw_write_attribute_with_xss_terminate
+
+            alias write_attribute_without_xss_terminate write_attribute
+            alias write_attribute write_attribute_with_xss_terminate
+          end
         end
       end
     end
@@ -45,12 +53,12 @@ module XssTerminate
         end
       elsif ::ActiveRecord::AttributeMethods::Write.method_defined? :raw_write_attribute
         # Rails = 5.1
-        def raw_write_attribute(attr_name, value)
-          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        def raw_write_attribute_with_xss_terminate(attr_name, value)
+          raw_write_attribute_without_xss_terminate(attr_name, xss_terminate_sanitize(attr_name, value))
         end
 
-        def write_attribute(attr_name, value)
-          super(attr_name, xss_terminate_sanitize(attr_name, value))
+        def write_attribute_with_xss_terminate(attr_name, value)
+          write_attribute_without_xss_terminate(attr_name, xss_terminate_sanitize(attr_name, value))
         end
       elsif ::ActiveRecord::AttributeMethods::Write.private_method_defined? :write_attribute_without_type_cast
         # Rails 5.2
