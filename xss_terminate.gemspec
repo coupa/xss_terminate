@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{xss_terminate}
-  s.version = '0.6.3'
+  s.version = '0.6.4'
   s.license = 'MIT'
 
   s.required_rubygems_version = Gem::Requirement.new('>= 0') if s.respond_to? :required_rubygems_version=
